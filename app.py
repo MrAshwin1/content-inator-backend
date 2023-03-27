@@ -18,8 +18,9 @@ openai.api_key = os.getenv('API_KEY')
 def paraphrase(sentence):
     # Remove any extra spaces and newlines from the sentence
     sentence = re.sub('\s+', ' ', sentence).strip()
-    # Set the max_tokens parameter to be equal to or 10 tokens more than the length of the input sentence
-    max_tokens = len(sentence.split()) + 10
+    # Set the max_tokens parameter to be one sentence more than the length of the input sentence
+    sentence_length = len(sentence.split('. '))
+    max_tokens = len(sentence) + (100 * sentence_length)
     # Use OpenAI's GPT-3 to generate a new sentence that conveys the same meaning
     response = openai.Completion.create(
       engine="davinci",
@@ -32,14 +33,18 @@ def paraphrase(sentence):
     )
     # Get the paraphrased sentence from the API response
     new_sentence = response.choices[0].text.strip()
+    # Trim the paraphrased sentence to end at a sentence boundary
+    new_sentence = re.sub(r'(?<=[^A-Z].[.?])\s+', ' ', new_sentence).split('. ')[:sentence_length+1]
+    new_sentence = '. '.join(new_sentence)
     return new_sentence
 
 # Define a function to improve the fluency of a given sentence
 def improve_fluency(sentence):
     # Remove any extra spaces and newlines from the sentence
     sentence = re.sub('\s+', ' ', sentence).strip()
-    # Set the max_tokens parameter to be equal to or 10 tokens more than the length of the input sentence
-    max_tokens = len(sentence.split()) + 10
+    # Set the max_tokens parameter to print one sentence extra than the original sentence
+    sentence_length = len(sentence.split('. '))
+    max_tokens = len(sentence) + (100 * sentence_length)
     # Use OpenAI's GPT-3 to generate a new sentence that conveys the same meaning, with improved fluency
     response = openai.Completion.create(
       engine="davinci",
@@ -52,8 +57,10 @@ def improve_fluency(sentence):
     )
     # Get the improved sentence from the API response
     new_sentence = response.choices[0].text.strip()
+    # Trim the paraphrased sentence to end at a sentence boundary
+    new_sentence = re.sub(r'(?<=[^A-Z].[.?])\s+', ' ', new_sentence).split('. ')[:sentence_length+1]
+    new_sentence = '. '.join(new_sentence)
     return new_sentence
-
 @app.route('/paraphrase', methods=['POST'])
 def paraphrase_endpoint():
     # Get the input phrase from the request body
